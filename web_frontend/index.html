@@ -1,0 +1,671 @@
+<!-- DỰA TRÊN LẦN GỬI CUỐI TRƯỚC KHI CÓ VC MANAGER, ĐÃ BAO GỒM CALCULATION UI CŨ -->
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Giám sát & Điều khiển Năng lượng</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+
+    <script src="lib/chart.umd.min.js"></script>
+    <script src="lib/chartjs-adapter-date-fns.umd.min.js"></script>
+    <script src="lib/socket.io.min.js"></script>
+</head>
+
+<body>
+    <!-- Dán vào ngay sau <body> -->
+    <div id="measures-management-overlay" class="overlay hidden">
+        <div class="modal" style="max-width: 900px; overflow: hidden;">
+            <div class="modal-header">
+                <h3 id="measures-modal-title">Quản lý Biến đo</h3>
+            </div>
+            <!-- Container cho hiệu ứng trượt -->
+            <div class="modal-sliding-container">
+                <!-- View 1: Bảng danh sách Measures -->
+                <div class="modal-view" id="measures-list-view">
+                    <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                        <p>Template: <strong id="measures-modal-template-name"></strong></p>
+                        <div id="measures-modal-table-container"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="modal-btn primary" data-action="close-measures-modal">Xong</button>
+                    </div>
+                </div>
+                <!-- View 2: Form sửa chi tiết -->
+                <div class="modal-view" id="measure-details-view">
+                    <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                        <h4 id="measure-details-name">Sửa chi tiết</h4>
+                        <div class="measure-details-form">
+                            <!-- Form inputs sẽ được chèn vào đây -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="modal-btn secondary" data-action="back-to-list">Quay lại</button>
+                        <button class="modal-btn primary" data-action="save-measure-details">Lưu & Quay lại</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="add-device-overlay" class="overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">Thêm thiết bị mới</h3>
+                <button class="modal-close-btn" data-action="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="modal-step-1" class="form-row-scrollable">
+                    <div class="form-item"><label for="template-type-selector">Chọn loại thiết bị</label><select
+                            id="template-type-selector">
+                            <option value="">-- Vui lòng chọn --</option>
+                        </select></div>
+                    <div class="form-item"><label for="template-brand-selector">Chọn hãng</label><select
+                            id="template-brand-selector" disabled>
+                            <option value="">-- Vui lòng chọn --</option>
+                        </select></div>
+                    <div class="form-item"><label for="template-model-selector">Chọn model</label><select
+                            id="template-model-selector" disabled>
+                            <option value="">-- Vui lòng chọn --</option>
+                        </select></div>
+                    <div class="form-item"><label for="new-device-name">Tên thiết bị <small>(duy
+                                nhất)</small></label><input type="text" id="new-device-name"
+                            placeholder="Ví dụ: INVT_1"></div>
+                </div>
+                <hr class="form-separator">
+                <div id="modal-step-2" class="hidden form-row-scrollable">
+                    <div class="form-item"><label for="new-device-protocol">Phương thức</label><input type="text"
+                            id="new-device-protocol" readonly></div>
+                    <div class="form-item"><label for="new-device-ip">Địa chỉ IP</label><input type="text"
+                            id="new-device-ip"></div>
+                    <div class="form-item"><label for="new-device-port">Port</label><input type="text"
+                            id="new-device-port"></div>
+                    <div class="form-item"><label for="new-device-slave">Slave Address</label><input type="number"
+                            id="new-device-slave"></div>
+                </div>
+                <div id="modal-status-message"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" data-action="close-modal">Hủy</button>
+                <button id="modal-save-btn" class="modal-btn primary" disabled>Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="sidebar-branding">
+                <img src="blue-white-logo.be2ac2bf.png" alt="Company Logo" class="sidebar-company-logo">
+                <span class="sidebar-company-name"></span>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-button active" data-page="home"><i class="bi bi-house-door"></i> 1. Giới
+                    Thiệu</button>
+                <div class="nav-group">
+                    <button class="nav-group-toggle">
+                        <span><i class="bi bi-gear"></i> 2. Cấu Hình Thiết Bị</span>
+                        <i class="bi bi-chevron-down toggle-arrow"></i>
+                    </button>
+                    <ul class="submenu">
+                        <li><button class="nav-button" data-page="system"><i class="bi bi-hdd-network"></i> Cổng vật lý
+                                (COM/IP)</button></li>
+                        <li><button class="nav-button" data-page="solar"><i class="bi bi-sun"></i> 2.1 Cấu hình đầu
+                                vào</button></li>
+                        <li><button class="nav-button" data-page="calculation"><i class="bi bi-calculator"></i> 2.2 Cấu
+                                hình đầu ra</button></li>
+                    </ul>
+                </div>
+                <button class="nav-button" data-page="overview"><i class="bi bi-bar-chart-line"></i> 3. Giám Sát Dữ
+                    Liệu</button>
+                <button class="nav-button" data-page="network"><i class="bi bi-router"></i> 4. Cấu hình Network</button>
+                <button class="nav-button" data-page="control"><i class="bi bi-sliders"></i> 5. Điều khiển bám
+                    tải</button>
+                <button class="nav-button" data-page="cloud"><i class="bi bi-cloud"></i> 6. Kết Nối Cloud</button>
+                <button class="nav-button" data-page="services"><i class="bi bi-speedometer"></i> 7. Virtual
+                    meter</button>
+                <button class="nav-button" data-page="auth"><i class="bi bi-person-lock"></i> 8. Phân quyền</button>
+            </nav>
+            <div class="sidebar-contact">
+                <h4 style="font-size: 10px;font-weight: bold;margin-bottom: 10px;color: #00aaff;">CONTACT</h4>
+                <p style="font-size: 12px;margin: 5px 0;display: flex"><i class="bi bi-telephone contact-icon"
+                        style="margin-right: 10px"></i> +84 916 84 86 38</p>
+                <p style="font-size: 12px;margin: 5px 0;display: flex"><i class="bi bi-envelope"
+                        style="margin-right: 10px"></i> info@datainsight.vn</p>
+                <p style="font-size: 12px;margin: 5px 0;display: flex"><i class="bi bi-globe"
+                        style="margin-right: 10px"></i> <a href="https://datainsight.vn" target="_blank"
+                        style="color: #ffffff;text-decoration: none;">datainsight.vn</a></p>
+                <p style="font-size: 12px;margin: 5px 0;display: flex"><i class="bi bi-geo-alt"
+                        style="margin-right: 10px"></i> Số 6 Kim Đồng, Giáp Bát, Hoàng Mai, Hà Nội</p>
+                <hr class="contact-separator" style="border: 0;border-top: 3px solid #444;margin: 10px 0">
+                <p style="font-size: 10px;text-align: center"><i class="bi bi-c-circle"
+                        style="margin-right: 10px"></i>2025 Data Insight Vietnam</p>
+            </div>
+        </aside>
+
+        <div class="content-area">
+            <main>
+                <div id="home-page" class="page active"><img src="EdgeSolar-art(transparent).png" alt="Homepage Art"
+                        class="homepage-image"></div>
+                <div id="solar-page" class="page">
+                    <div class="solar-header">
+                    </div>
+                    <div id="solar-workbench-container"></div>
+                </div>
+                <div id="network-page" class="page">
+                    <h2>4. Cấu hình Network</h2>
+                    <div class="card" style="padding: 20px; text-align: center; color: #94a3b8;">
+                        <i class="bi bi-cone-striped" style="font-size: 3rem; margin-bottom: 10px; display: block;"></i>
+                        <p>Tính năng đang phát triển (Ethernet, Wifi, 4G Config).</p>
+                    </div>
+                </div>
+
+                <div id="auth-page" class="page">
+                    <h2>8. Phân quyền người dùng</h2>
+                    <div class="card" style="padding: 20px; text-align: center; color: #94a3b8;">
+                        <i class="bi bi-shield-lock" style="font-size: 3rem; margin-bottom: 10px; display: block;"></i>
+                        <p>Tính năng quản lý tài khoản và phân quyền đang phát triển.</p>
+                    </div>
+                </div>
+                <div id="system-page" class="page">
+                    <div class="device-group">
+                        <div id="system-coms-workbench" class="device-card-grid"
+                            style="grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));">
+                            <p>Đang tải cấu hình...</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="cloud-page" class="page">
+                    <div class="device-group">
+                        <div id="cloud-workbench" style="max-width: 800px;">
+                            <p>Đang tải cấu hình...</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="global-apply-bar">
+                    <p><span id="change-count" class="change-count">0</span> pending changes</p>
+                    <div>
+                        <button id="global-discard-btn" class="btn btn-secondary">Discard All</button>
+                        <button id="global-apply-btn" class="btn btn-primary">Apply Changes & Restart</button>
+                    </div>
+                </div>
+                <div id="overview-page" class="page">
+                    <div class="overview-layout">
+                        <div class="overview-left">
+                            <div class="data-table-container card">
+                                <h3>Thông số đo lường</h3>
+                                <div class="table-wrapper">
+                                    <table id="overview-data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Địa chỉ</th>
+                                                <th>Tên Biến</th>
+                                                <th>Giá trị</th>
+                                                <th>Thời gian cập nhật</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="overview-right">
+                            <div class="fixed-control-section card">
+                                <h3>Thông tin điều khiển</h3>
+                                <table class="control-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Lệnh</th>
+                                            <th>Giá trị hiện tại</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Cho phép điều khiển</td>
+                                            <td class="display-value" id="overview-display-enable-adj">N/A</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Set Pout (kW)</td>
+                                            <td class="display-value" id="overview-display-powersetkw">N/A</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Set Pout (%)</td>
+                                            <td class="display-value" id="overview-display-powersetpe">N/A</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="chart-container card" style="position: relative;">
+                                <h3 id="overview-chart-title">Biểu đồ công suất tổng (hệ thống)</h3>
+                                <!-- [THÊM NÚT NÀY VÀO ĐÂY] -->
+                                <button id="btn-open-chart-config"
+                                    style="position: absolute; top: 15px; right: 20px; background: none; border: none; color: #cbd5e1; cursor: pointer; font-size: 1.2rem; transition: color 0.2s;"
+                                    title="Cấu hình biểu đồ">
+                                    <i class="bi bi-gear-fill"></i>
+                                </button>
+                                <div class="chart-filters">
+                                    <div class="custom-time-filter">
+                                        <div class="time-preset-buttons">
+                                            <button class="btn btn-secondary preset-btn" data-range="today">Hôm
+                                                nay</button>
+                                            <button class="btn btn-secondary preset-btn" data-range="yesterday">Hôm
+                                                qua</button>
+                                            <button class="btn btn-secondary preset-btn" data-range="7d">7 ngày</button>
+                                        </div>
+
+                                        <div class="filter-separator"></div>
+
+                                        <div class="filter-item">
+                                            <label for="start-time-picker">Từ:</label>
+                                            <input type="datetime-local" id="start-time-picker">
+                                        </div>
+                                        <div class="filter-item">
+                                            <label for="end-time-picker">Đến:</label>
+                                            <input type="datetime-local" id="end-time-picker">
+                                        </div>
+                                        <div class="filter-item">
+                                            <label for="resolution-selector">Phân giải:</label>
+                                            <select id="resolution-selector">
+                                                <option value="auto">Tự động</option>
+                                                <option value="raw">Dữ liệu gốc</option>
+                                                <option value="1min">1 Phút</option>
+                                                <option value="5min">5 Phút</option>
+                                            </select>
+                                        </div>
+                                        <button id="fetch-history-btn" class="btn btn-primary">Tải dữ liệu</button>
+
+                                        <div class="filter-separator"></div>
+
+                                        <button id="realtime-btn" class="btn btn-secondary">Xem Real time</button>
+                                    </div>
+                                </div>
+                                <div class="chart-canvas-wrapper" style="height: 400px; padding: 10px;">
+                                    <canvas id="realtime-power-chart-overview"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="control-page" class="page">
+                    <h2>Điều khiển</h2>
+                    <div class="control-header-info">
+                        <div class="status-item">
+                            <span class="status-label">Trạng thái</span>
+                            <div class="status-value connected">
+                                <div id="iec104-connection-status-indicator" class="status-dot"></div>
+                                <strong id="iec104-connection-status-text">Đang kết nối...</strong>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Địa chỉ IP</span>
+                            <strong id="control-ip-display" class="status-value">N/A</strong>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Nhà máy</span>
+                            <input type="text" id="control-site-input" value="Main_Residence" class="status-input">
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Tỉnh</span>
+                            <input type="text" id="control-province-input" value="Energy_Provider_Inc"
+                                class="status-input">
+                        </div>
+                    </div>
+                    <p class="control-description">Điều khiển từ xa (AO) - QĐ 378/QĐ-EVN. Hệ thống hỗ trợ điều khiển từ
+                        xa theo yêu cầu điều lực để đảm bảo an toàn và ổn định lưới điện. Các lệnh điều khiển được thực
+                        thi qua giao thức Modbus TCP hoặc IEC 60870-5-104.</p>
+                    <div class="control-main-layout">
+                        <div class="control-column">
+                            <div class="control-group-card">
+                                <h3>Giá trị đo lường</h3>
+                                <div class="progress-item">
+                                    <label>Công suất lưới</label>
+                                    <div class="progress-bar">
+                                        <div class="progress-bar-fill blue" id="progress-grid-power"></div>
+                                    </div>
+                                    <span class="progress-value" id="control-pm01-activepowersum">N/A kW</span>
+                                </div>
+                                <div class="progress-item">
+                                    <label>Công suất solar</label>
+                                    <div class="progress-bar">
+                                        <div class="progress-bar-fill yellow" id="progress-solar-power"></div>
+                                    </div>
+                                    <span class="progress-value" id="control-invt-activepowersum">N/A kW</span>
+                                </div>
+                                <div class="progress-item">
+                                    <label>Công suất đặt</label>
+                                    <div class="progress-bar">
+                                        <div class="progress-bar-fill green" id="progress-config-power"></div>
+                                    </div>
+                                    <span class="progress-value" id="control-invt-pmax">N/A kW</span>
+                                </div>
+                            </div>
+                            <div class="control-group-card">
+                                <h3>Điện năng hôm qua</h3>
+                                <div class="stat-item">
+                                    <div class="stat-icon yellow"><i class="bi bi-sun"></i></div>
+                                    <div class="stat-content">
+                                        <span class="stat-label">Điện năng lưới ngày hôm qua</span>
+                                        <div class="stat-main">
+                                            <span class="stat-value" id="control-invt-ex-yenergy">N/A kWh</span>
+                                            <span class="stat-change positive">+N/a %</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-icon blue"><i class="bi bi-lightning-charge-fill"></i></div>
+                                    <div class="stat-content">
+                                        <span class="stat-label">Điện năng lưới ngày hôm nay</span>
+                                        <div class="stat-main">
+                                            <span class="stat-value" id="control-pm01-im-yenergy">N/A kWh</span>
+                                            <span class="stat-change positive">+N/a %</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-icon purple"><i class="bi bi-arrow-repeat"></i></div>
+                                    <div class="stat-content">
+                                        <span class="stat-label">Điện năng phát ngược lưới hôm qua</span>
+                                        <div class="stat-main">
+                                            <span class="stat-value" id="control-pm01-ex-yenergy">N/A kWh</span>
+                                            <span class="stat-change positive">+N/a %</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="control-column">
+                            <div class="control-group-card">
+                                <h3>Giá trị đặt</h3>
+                                <div class="control-item">
+                                    <label for="control-evn-enable-adj-switch">Cho phép phát lên lưới</label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="control-evn-enable-adj-switch"
+                                            data-measure="EVN:Enable_Adj">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="control-item-input">
+                                    <label for="input-powerset-kw">Giá trị P-out lưới(Kw)</label>
+                                    <span class="current-value-display" data-measure="PM01:PowerSetkW">Hiện tại: N/A
+                                        kW</span>
+                                    <input type="number" id="input-powerset-kw" class="control-input"
+                                        data-measure="PM01:PowerSetkW" placeholder="Nhập giá trị mới">
+                                </div>
+                                <div class="control-item-input">
+                                    <label for="input-powerset-pe">Giá trị P-out lưới(%)</label>
+                                    <span class="current-value-display" data-measure="PM01:PowerSetPe">Hiện tại: N/A
+                                        %</span>
+                                    <input type="number" id="input-powerset-pe" class="control-input"
+                                        data-measure="PM01:PowerSetPe" placeholder="Nhập giá trị mới">
+                                </div>
+                                <div class="control-actions">
+                                    <button id="apply-control-changes-btn" class="btn btn-primary">Xác nhận</button>
+                                    <button id="reset-control-changes-btn" class="btn btn-secondary">Hủy</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="services-page" class="page">
+                    <div id="services-workbench" style="display: flex; flex-wrap: wrap; gap: 20px;">
+                        <p>Đang tải cấu hình...</p>
+                    </div>
+                </div>
+                <div id="calculation-page" class="page">
+                    <div id="calculation-workbench" class="workbench-grid">
+                        <div class="device-group" style="width: 100%;">
+                            <div class="group-header">
+                                <h3>1. Virtual Controllers (Bộ điều khiển ảo)</h3>
+                                <button class="add-device-link action-add-vc">+ Tạo Controller mới</button>
+                            </div>
+                            <div id="vc-card-grid" class="device-card-grid"></div>
+                        </div>
+
+                        <div class="device-group" style="width: 100%;">
+                            <div class="group-header">
+                                <h3>2. Danh sách phép tính (Measures)</h3>
+                                <button class="add-device-link action-add-calc">+ Thêm phép tính mới</button>
+                            </div>
+                            <div id="calc-card-grid" class="device-card-grid"></div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <div id="display-settings-overlay" class="overlay hidden">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>Chọn biến hiển thị</h3>
+                <button class="modal-close-btn"
+                    onclick="document.getElementById('display-settings-overlay').classList.add('hidden')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 10px; color: #94a3b8; font-size: 0.9rem;">Chọn các biến bạn muốn theo dõi trên
+                    thẻ thiết bị:</p>
+                <div id="display-settings-list"
+                    style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary"
+                    onclick="document.getElementById('display-settings-overlay').classList.add('hidden')">Hủy</button>
+                <button class="modal-btn primary" id="btn-save-display-settings">Lưu hiển thị</button>
+            </div>
+        </div>
+    </div>
+    <div id="calc-modal-overlay" class="overlay hidden">
+        <div class="modal" style="max-width: 750px; max-height: 90vh;">
+            <div class="modal-header">
+                <h3>Cấu hình Phép tính & Hằng số</h3>
+                <button class="modal-close-btn" data-action="close-calc-modal">&times;</button>
+            </div>
+            <div class="modal-body" style="overflow-y: auto;">
+                <!-- 1. THÔNG TIN CƠ BẢN -->
+                <h4 style="color: #a5b4fc; border-bottom: 1px solid #475569; padding-bottom: 5px;">1. Biến kết quả</h4>
+                <div class="form-row-scrollable" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <div class="form-item"><label>Mã ID</label><input type="text" id="calc-output-id"></div>
+                    <div class="form-item"><label>Tên hiển thị</label><input type="text" id="calc-output-name"></div>
+                    <div class="form-item"><label>Đơn vị</label><input type="text" id="calc-output-unit"></div>
+                </div>
+
+                <!-- 2. LOẠI PHÉP TÍNH -->
+                <div class="form-item" style="margin-top: 15px;">
+                    <label>Loại phép tính / Nguồn dữ liệu</label>
+                    <select id="calc-input-operation" class="modal-input">
+                        <optgroup label="Thống kê & Gộp">
+                            <option value="sum">Cộng dồn (SUM)</option>
+                            <option value="avg">Trung bình (AVG)</option>
+                            <option value="sub">Phép trừ (SUB)</option>
+                        </optgroup>
+                        <optgroup label="Giá trị thủ công">
+                            <option value="constant">Hằng số cố định (Constant)</option>
+                            <option value="manual_status">Công tắc trạng thái (0/1)</option>
+                        </optgroup>
+                        <optgroup label="Thống kê thời gian">
+                            <option value="max_daily">Max trong ngày</option>
+                            <option value="min_daily">Min trong ngày</option>
+                            <option value="max_yesterday">Max hôm qua</option>
+                            <option value="min_yesterday">Min hôm qua</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <!-- 3. PHẦN ĐỘNG (Hiện theo loại đã chọn) -->
+                <div id="dynamic-calc-section" style="margin-top: 20px;">
+                    <!-- Ô cho Hằng số -->
+                    <div id="area-constant" class="hidden">
+                        <div class="form-item"><label>Giá trị hằng số</label><input type="number" id="calc-constant-value" step="any"></div>
+                    </div>
+                    
+                    <!-- Ô cho Thống kê (Chọn thiết bị đầu vào) -->
+                    <div id="area-items">
+                        <h4 style="color: #a5b4fc; border-bottom: 1px solid #475569; padding-bottom: 5px; display: flex; justify-content: space-between;">
+                            2. Thành phần đầu vào <button id="btn-add-row" class="btn btn-secondary btn-sm">+ Thêm</button>
+                        </h4>
+                        <div id="calc-rows-container"></div>
+                    </div>
+                </div>
+
+                <!-- 4. HIỆU CHỈNH (SCALING) -->
+                <h4 style="margin-top: 20px; color: #a5b4fc; border-bottom: 1px solid #475569; padding-bottom: 5px;">3. Hiệu chỉnh (Scaling)</h4>
+                <p style="font-size: 0.75rem; color: #94a3b8;">Kết quả = (Kết quả gốc × Hệ số nhân) + Hệ số cộng</p>
+                <div class="form-row-scrollable" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-item"><label>Hệ số nhân (Factor)</label><input type="number" id="calc-scaling-factor" value="1" step="any"></div>
+                    <div class="form-item"><label>Hệ số cộng (Offset)</label><input type="number" id="calc-scaling-offset" value="0" step="any"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" data-action="close-calc-modal">Hủy</button>
+                <button class="modal-btn primary" id="btn-save-calc">Lưu Phép tính</button>
+            </div>
+        </div>
+    </div>
+    <div id="vc-modal-overlay" class="overlay hidden">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 id="vc-modal-title">Tạo Virtual Controller mới</h3>
+                <button class="modal-close-btn" data-action="close-vc-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-item">
+                    <label>Mã Controller (ID)</label>
+                    <input type="text" id="vc-input-id" placeholder="VD: VC_Nha_May_1">
+                </div>
+                <div class="form-item">
+                    <label>Tên hiển thị</label>
+                    <input type="text" id="vc-input-name" placeholder="VD: Virtual Meter Tổng">
+                </div>
+                <div class="form-item">
+                    <label>Mô tả</label>
+                    <input type="text" id="vc-input-desc" placeholder="Ghi chú...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" data-action="close-vc-modal">Hủy</button>
+                <button id="btn-save-vc" class="modal-btn primary">Lưu</button>
+            </div>
+        </div>
+    </div>
+    <div id="v-measure-modal-overlay" class="overlay hidden">
+        <div class="modal" style="max-width: 450px;">
+            <div class="modal-header">
+                <!-- ID tiêu đề: js dùng để đổi text thành "Sửa biến..." -->
+                <h3 id="vm-modal-title">Cấu hình biến ảo</h3>
+                <button class="modal-close-btn" data-action="close-vm-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Các ô ẩn để lưu ID/Addr khi sửa -->
+                <input type="hidden" id="vm-target-vc-id">
+                <input type="hidden" id="vm-target-addr">
+
+                <div class="form-item">
+                    <label>Tên biến (Name)</label>
+                    <input type="text" id="vm-input-name" placeholder="VD: Total_Power">
+                </div>
+
+                <!-- [QUAN TRỌNG] Ô này thiếu nên gây lỗi -->
+                <div class="form-item">
+                    <label>Nguồn dữ liệu (Liên kết Phép tính)</label>
+                    <select id="vm-input-calc-link" class="modal-input">
+                        <option value="">-- Không liên kết (Nhập tay) --</option>
+                    </select>
+                </div>
+
+                <div class="form-row-scrollable"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding:0;">
+                    <!-- [QUAN TRỌNG] Ô Unit -->
+                    <div class="form-item">
+                        <label>Đơn vị (Unit)</label>
+                        <input type="text" id="vm-input-unit" placeholder="kW, V, A...">
+                    </div>
+                    <!-- [QUAN TRỌNG] Ô DataType -->
+                    <div class="form-item">
+                        <label>Kiểu dữ liệu</label>
+                        <select id="vm-input-datatype">
+                            <option value="FLOAT">FLOAT</option>
+                            <option value="INT">INT</option>
+                            <option value="WORD">WORD</option>
+                            <option value="BIT">BIT</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-item">
+                    <label>Địa chỉ (Tự động/Không dùng)</label>
+                    <input type="text" id="vm-input-addr" disabled style="background: #334155; opacity: 0.7;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" data-action="close-vm-modal">Hủy</button>
+                <!-- Nút Lưu có ID để JS bắt sự kiện -->
+                <button id="btn-save-v-measure" class="modal-btn primary">Lưu Biến</button>
+            </div>
+        </div>
+    </div>
+    <div id="chart-config-overlay" class="overlay hidden">
+        <div class="modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Cấu hình Biểu đồ Overview</h3>
+                <button class="modal-close-btn" id="close-chart-modal">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 10px;">
+                <p style="color: #f59e0b; font-size: 0.85rem; margin-bottom: 10px;">
+                    <i class="bi bi-info-circle"></i> Các biến được chọn vẽ biểu đồ sẽ tự động được bật chế độ "Ghi lịch
+                    sử".
+                </p>
+
+                <table class="control-table" style="font-size: 0.9rem;">
+                    <thead>
+                        <tr>
+                            <th>Thiết bị</th>
+                            <th>Biến đo</th>
+                            <th>Tên hiển thị (Label)</th>
+                            <th>Màu sắc</th>
+                            <th style="width: 50px;">Xóa</th>
+                        </tr>
+                    </thead>
+                    <tbody id="chart-config-body"></tbody>
+                </table>
+
+                <div
+                    style="margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end;">
+                    <div class="form-group" style="margin:0;">
+                        <label>Chọn Thiết bị</label>
+                        <select id="chart-add-device" class="modal-input"></select>
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label>Chọn Biến</label>
+                        <select id="chart-add-measure" class="modal-input" disabled></select>
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label>Màu sắc</label>
+                        <input type="color" id="chart-add-color" value="#4ade80"
+                            style="width: 100%; height: 38px; padding: 2px;">
+                    </div>
+                    <button class="btn btn-secondary" id="btn-add-chart-line" style="height: 38px;">+ Thêm</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-chart-config">Hủy</button>
+                <button class="btn btn-primary" id="save-chart-config">Lưu & Vẽ lại</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/apiService.js" type="module" defer></script>
+    <script src="js/main.js" type="module" defer></script>
+    <script src="js/page-overview.js" type="module" defer></script>
+    <script src="js/page-details.js" type="module" defer></script>
+    <script src="js/page-controls.js" type="module" defer></script>
+    <script src="js/page-solar-config.js" type="module" defer></script>
+    <script src="js/page-system-config.js" type="module" defer></script>
+    <script src="js/page-cloud-config.js" type="module" defer></script>
+    <script src="js/page-services.js" type="module" defer></script>
+    <script src="js/page-calculation.js" type="module" defer></script>
+</body>
+
+</html>

@@ -1,0 +1,64 @@
+{
+  "modbus-tcp": {
+    "displayName": "Modbus-TCP",
+    "protocolValue": "Modbus-TCP",
+    "fields": [
+      {
+        "name": "address",
+        "label": "Địa chỉ IP",
+        "type": "text",
+        "required": true,
+        "placeholder": "Ví dụ: 192.168.137.1",
+        "targetPath": "endpoint",
+        "specialHandling": "join_ip_port"
+      },
+      {
+        "name": "port",
+        "label": "Port",
+        "type": "number",
+        "default": 502,
+        "required": true,
+        "targetPath": "endpoint",
+        "specialHandling": "join_ip_port"
+      },
+      {
+        "name": "slave",
+        "label": "Slave Address",
+        "type": "number",
+        "default": 1,
+        "required": true,
+        "targetPath": "args.slaveAddr"
+      }
+    ]
+  },
+  "modbus-rtu": {
+    "displayName": "Modbus-RTU",
+    "protocolValue": "Modbus-RTU",
+    "fields": [
+      {
+        "name": "slave",
+        "label": "Slave Address",
+        "type": "number",
+        "default": 1,
+        "required": true,
+        "targetPath": "args.slaveAddr"
+      },
+      {
+        "name": "endpoint",
+        "label": "Cổng vật lý",
+        "type": "select",
+        "required": true,
+        "targetPath": "endpoint",
+        "options": [
+          { "display": "RS485-1", "value": "rs232" },
+          { "display": "RS485-2", "value": "rs485" }
+        ]
+      }
+    ]
+  },
+  "virtual-controller": {
+    "displayName": "Virtual Controller",
+    "protocolValue": "Virtual Controller",
+    "fields": [] 
+  }
+}

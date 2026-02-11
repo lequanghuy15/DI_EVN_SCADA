@@ -1,0 +1,191 @@
+[
+    {
+        "id": "EVN:Enable_Adj",
+        "name": "EVN:Enable_Adj",
+        "unit": "",
+        "operation": "manual_status",
+        "constant_value": 0,
+        "scaling_factor": 1,
+        "scaling_offset": 0,
+        "items": []
+    },
+    {
+        "id": "PM01:PowerSetPe",
+        "name": "PM01:PowerSetPe",
+        "unit": "",
+        "operation": "constant",
+        "constant_value": 0,
+        "scaling_factor": 1,
+        "scaling_offset": 0,
+        "items": []
+    },
+    {
+        "id": "PM01:PowerSetkW",
+        "name": "PM01:PowerSetkW",
+        "unit": "",
+        "operation": "sum",
+        "constant_value": 0,
+        "scaling_factor": 10,
+        "scaling_offset": 0,
+        "items": [
+            {
+                "device": "Calculations",
+                "measure": "PM01:PowerSetPe"
+            }
+        ]
+    },
+    {
+        "id": "INVT_T:PLoad",
+        "name": "INVT_T:PLoad",
+        "unit": "",
+        "operation": "sum",
+        "constant_value": 0,
+        "scaling_factor": 1,
+        "scaling_offset": 0,
+        "items": [
+            {
+                "device": "Logger",
+                "measure": "INVT_T:ActivePowerSum"
+            },
+            {
+                "device": "Zero_Export",
+                "measure": "PM01:ActivePowerSum"
+            }
+        ]
+    },
+    {
+        "id": "PM01:Im_TEnergy",
+        "name": "PM01:Im_TEnergy",
+        "unit": "",
+        "operation": "sum",
+        "constant_value": 0,
+        "scaling_factor": 1,
+        "scaling_offset": 0,
+        "items": [
+            {
+                "device": "Zero_Export",
+                "measure": "PM01:Im_TEnergy"
+            }
+        ]
+    },
+    {
+        "id": "PM01:Ex_TEnergy",
+        "name": "PM01:Ex_TEnergy",
+        "unit": "",
+        "operation": "sum",
+        "constant_value": 0,
+        "scaling_factor": 1,
+        "scaling_offset": 0,
+        "items": [
+            {
+                "device": "Zero_Export",
+                "measure": "PM01:Ex_TEnergy"
+            }
+        ]
+    },
+    {
+        "id": "INVT_T:Ex_TEnergy",
+        "name": "INVT_T:Ex_TEnergy",
+        "unit": "",
+        "operation": "sum",
+        "constant_value": 0,
+        "scaling_factor": 1,
+        "scaling_offset": 0,
+        "items": [
+            {
+                "device": "Logger",
+                "measure": "INVT_T:Ex_TEnergy"
+            }
+        ]
+    },
+    {
+        "id": "Max(INVT_T:Ex_TEnergy)",
+        "name": "Max(INVT_T:Ex_TEnergy)",
+        "unit": "",
+        "operation": "max_yesterday",
+        "constant_value": 0,
+        "scaling_factor": 1,
+        "scaling_offset": 0,
+        "items": [
+            {
+                "device": "Logger",
+                "measure": "INVT_T:Ex_TEnergy"
+            }
+        ]
+    },
+    {
+        "id": "Min(INVT_T:Ex_TEnergy)",
+        "name": "Min(INVT_T:Ex_TEnergy)",
+        "unit": "",
+        "operation": "min_yesterday",
+        "constant_value": 0,
+        "scaling_factor": 1,
+        "scaling_offset": 0,
+        "items": [
+            {
+                "device": "Logger",
+                "measure": "INVT_T:Ex_TEnergy"
+            }
+        ]
+    },
+    {
+        "id": "PM_1:Im_TEnergy",
+        "name": "PM_1:Im_TEnergy",
+        "unit": "",
+        "operation": "sum",
+        "constant_value": 0,
+        "scaling_factor": 1,
+        "scaling_offset": 0,
+        "items": [
+            {
+                "device": "Zero_Export",
+                "measure": "PM01:Im_TEnergy"
+            }
+        ]
+    },
+    {
+        "id": "PM_1:Ex_TEnergy",
+        "name": "PM_1:Ex_TEnergy",
+        "unit": "",
+        "operation": "sum",
+        "constant_value": 0,
+        "scaling_factor": 1,
+        "scaling_offset": 0,
+        "items": [
+            {
+                "device": "Zero_Export",
+                "measure": "PM01:Ex_TEnergy"
+            }
+        ]
+    },
+    {
+        "id": "1",
+        "name": "INVT_T:Ex_YEnergy",
+        "unit": "kWh",
+        "operation": "max_yesterday",
+        "constant_value": 0,
+        "scaling_factor": 1,
+        "scaling_offset": 0,
+        "items": [
+            {
+                "device": "Logger",
+                "measure": "INVT_T:Ex_DEnergy"
+            }
+        ]
+    },
+    {
+        "id": "15",
+        "name": "test",
+        "unit": "1",
+        "operation": "sum",
+        "constant_value": 0,
+        "scaling_factor": 1,
+        "scaling_offset": 0,
+        "items": [
+            {
+                "device": "Zero_Export",
+                "measure": "PM01:Im_TEnergy"
+            }
+        ]
+    }
+]

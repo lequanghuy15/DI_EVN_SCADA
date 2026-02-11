@@ -1,0 +1,22 @@
+{
+    "datasets": [
+        {
+            "device": "Logger",
+            "measure": "INVT_T:ActivePowerSum",
+            "label": "Logger:INVT_T:ActivePowerSum",
+            "color": "#109842"
+        },
+        {
+            "device": "Logger",
+            "measure": "INVT_T:P_Max",
+            "label": "Logger:INVT_T:P_Max",
+            "color": "#97701c"
+        },
+        {
+            "device": "Logger",
+            "measure": "INVT_T:ActiveArray",
+            "label": "Logger:INVT_T:ActiveArray",
+            "color": "#3f3b31"
+        }
+    ]
+}

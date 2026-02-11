@@ -1,0 +1,162 @@
+{
+    "solar_card_display": {
+        "EVN": [
+            "PM_2:Im_TEnergy",
+            "PM_3:Im_TEnergy",
+            "PM_2:Ex_TEnergy",
+            "PM_3:Ex_TEnergy",
+            "EVN:Enable_Adj",
+            "INVT_T:Ex_TEnergy",
+            "INVT_T:Ex_YEnergy",
+            "INVT_T:PLoad",
+            "PM_1:Im_TEnergy",
+            "PM_1:Ex_TEnergy",
+            "PM01:PowerSetkW",
+            "PM01:PowerSetPe",
+            "PM01:Im_TEnergy",
+            "PM01:Ex_TEnergy"
+        ],
+        "Logger": [
+            "INVT_T:ActivePowerSum",
+            "INVT_T:Ex_DEnergy",
+            "INVT_T:ReActivePowerSum",
+            "INVT_T:Ex_TEnergy",
+            "INVT_T:P_Max",
+            "INVT_T:ActiveArray",
+            "INVT_T:PowerSetkW",
+            "INVT_T:PowerSetPe"
+        ],
+        "Zero_Export": [
+            "PM01:ActivePowerSum",
+            "PM01:Im_TEnergy",
+            "PM01:Ex_TEnergy",
+            "PM01:ActivePower_A",
+            "PM01:ActivePower_B",
+            "PM01:ActivePower_C",
+            "PM01:Ua",
+            "PM01:Ub",
+            "PM01:Uc",
+            "PM01:Freq",
+            "PM01:ReActivePower_A",
+            "PM01:ReActivePower_B",
+            "PM01:ReActivePower_C",
+            "PM01:ReActivePowerSum",
+            "PM01:T_PowerFactor",
+            "PM01:Ia",
+            "PM01:Ib",
+            "PM01:Ic",
+            "PT",
+            "CT"
+        ]
+    },
+    "overview_table": [
+        {
+            "id": 1,
+            "alias": "P-OUT",
+            "realName": "Công suất phát lưới",
+            "controller": "Zero_Export",
+            "fullName": "PM01:ActivePowerSum",
+            "isMandatory": true,
+            "defaultUnit": ""
+        },
+        {
+            "id": 2,
+            "alias": "P-INV-OUT",
+            "realName": "Công suất Inverter",
+            "controller": "Logger",
+            "fullName": "INVT_T:ActivePowerSum",
+            "isMandatory": true,
+            "defaultUnit": "kW"
+        },
+        {
+            "id": 3,
+            "alias": "A D-I",
+            "realName": "Điện năng giao hôm qua",
+            "controller": "EVN",
+            "fullName": "INVT_T:Ex_YEnergy",
+            "isMandatory": false,
+            "defaultUnit": ""
+        },
+        {
+            "id": 4,
+            "alias": "Cosphi",
+            "realName": "Hệ số công suất",
+            "controller": "Zero_Export",
+            "fullName": "PM01:T_PowerFactor",
+            "isMandatory": true,
+            "defaultUnit": ""
+        },
+        {
+            "id": 5,
+            "alias": "Q-INV-OUT",
+            "realName": "Công suất phản kháng",
+            "controller": "Zero_Export",
+            "fullName": "PM01:ReActivePowerSum",
+            "isMandatory": true,
+            "defaultUnit": ""
+        },
+        {
+            "id": 6,
+            "alias": "Ia",
+            "realName": "Dòng điện pha A",
+            "controller": "Zero_Export",
+            "fullName": "PM01:Ia",
+            "isMandatory": true,
+            "defaultUnit": ""
+        },
+        {
+            "id": 7,
+            "alias": "Ib",
+            "realName": "Dòng điện pha B",
+            "controller": "Zero_Export",
+            "fullName": "PM01:Ib",
+            "isMandatory": true,
+            "defaultUnit": ""
+        },
+        {
+            "id": 8,
+            "alias": "Ic",
+            "realName": "Dòng điện pha C",
+            "controller": "Zero_Export",
+            "fullName": "PM01:Ic",
+            "isMandatory": true,
+            "defaultUnit": ""
+        },
+        {
+            "id": 9,
+            "alias": "Ua",
+            "realName": "Điện áp pha A",
+            "controller": "Zero_Export",
+            "fullName": "PM01:Ua",
+            "isMandatory": true,
+            "defaultUnit": ""
+        },
+        {
+            "id": 10,
+            "alias": "Ub",
+            "realName": "Điện áp pha B",
+            "controller": "Zero_Export",
+            "fullName": "PM01:Ub",
+            "isMandatory": true,
+            "defaultUnit": ""
+        },
+        {
+            "id": 11,
+            "alias": "Uc",
+            "realName": "Điện áp pha C",
+            "controller": "Zero_Export",
+            "fullName": "PM01:Uc",
+            "isMandatory": true,
+            "defaultUnit": ""
+        },
+        {
+            "id": 12,
+            "alias": "Frequence",
+            "realName": "Tần số lưới",
+            "controller": "Zero_Export",
+            "fullName": "PM01:Freq",
+            "isMandatory": true,
+            "defaultUnit": ""
+        }
+    ]
+}
