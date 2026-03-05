@@ -79,6 +79,76 @@ Dữ liệu đi qua hệ thống theo hành trình từ **Thiết bị thật (S
 *   **Socket.IO:** Khi dữ liệu cache thay đổi, server phát sự kiện `page_data_update` qua Websocket. Trình duyệt nhận sự kiện này để cập nhật trực tiếp lên Dashboard và Biểu đồ.
 *   **Cloud Service:** Tự động đồng bộ các biến theo cấu hình `CLOUD_UPLOAD_RULES` lên các nền tảng IoT Cloud qua giao thức MQTT.
 
+## 🔌 Tài liệu API (API Documentation)
+
+Hệ thống cung cấp RESTful API để Frontend tương tác với Backend. Tất cả phản hồi (response) đều ở định dạng JSON.
+
+### 1. Solar Configuration
+*   `GET /api/solar_configuration`
+    *   **Mô tả:** Lấy danh sách thiết bị, trạng thái template và cấu hình hiện tại.
+*   `POST /api/solar_configuration`
+    *   **Mô tả:** Cập nhật cấu hình Solar (thêm/sửa/xóa thiết bị, cấu hình thông số CT/PT).
+
+### 2. Manual & Virtual Controls
+*   `POST /api/update_manual_value`
+    *   **Mô tả:** Cập nhật giá trị hằng số (ví dụ: đặt công suất cố định cho Virtual Controller).
+*   `POST /api/update_manual_state`
+    *   **Mô tả:** Cập nhật trạng thái công tắc (0/1).
+*   `POST /api/write_device_value`
+    *   **Mô tả:** Gửi lệnh ghi trực tiếp xuống thiết bị vật lý qua MQTT (cho các biến `readWrite: "rw"`).
+
+### 3. Historical Data
+*   `GET /api/history`
+    *   **Mô tả:** Lấy dữ liệu lịch sử phục vụ biểu đồ.
+    *   **Parameters:** 
+        *   `sensor_ids`: Chuỗi ID thiết bị (cách nhau bằng dấu phẩy).
+        *   `start_time`: Unix timestamp (bắt đầu).
+        *   `end_time`: Unix timestamp (kết thúc).
+        *   `resolution`: Tùy chọn `auto` | `raw` | `1min` | `5min`.
+
+### 4. System & Cloud
+*   `GET/POST /api/system_configuration`
+    *   **Mô tả:** Đọc/Ghi cấu hình cổng COM, Cloud MQTT, và tham số IEC104.
+*   `GET/POST /api/cloud_upload_rules`
+    *   **Mô tả:** Quản lý các biến được phép đẩy lên Cloud.
+*   `GET/POST /api/logging_rules`
+    *   **Mô tả:** Quản lý Whitelist các biến được phép ghi vào Database.
+
+---
+
+## 🔄 Luồng dữ liệu: Cấu hình Hệ thống (Config Lifecycle)
+
+Khi người dùng thực hiện thay đổi cấu hình (thêm thiết bị, sửa thông số), dữ liệu tuân theo quy trình hợp nhất để đảm bảo tính nhất quán:
+
+### Quy trình "Sửa - Lưu - Tái khởi động"
+
+1.  **Giai đoạn Pending (Frontend):** Thay đổi được lưu tạm trên trình duyệt (`appData.pending_changes`). Người dùng có thể chỉnh sửa nhiều hạng mục trước khi áp dụng.
+2.  **Giai đoạn Unified Payload (Submit):** Khi nhấn "Apply Changes", Frontend gom toàn bộ thay đổi từ: `Devices (Solar)` + `System (COMs)` + `Cloud (MQTT)` + `IEC104` thành một `unifiedPayload` duy nhất.
+3.  **Giai đoạn Backend Processing:**
+    *   Backend nhận `unifiedPayload` qua `POST /api/system_configuration`.
+    *   Hợp nhất dữ liệu mới với cấu hình gốc từ `device_supervisor.cfg`.
+    *   Ghi đè file `.cfg` mới và dùng lệnh `os.fsync()` để ép dữ liệu xuống ổ đĩa Flash.
+    *   Kill tiến trình `device_supervisor` đang chạy để hệ thống tự động khởi động lại với cấu hình mới.
+
+### Sơ đồ Luồng Cấu hình (Config Flow)
+
+```mermaid
+sequenceDiagram
+    participant User as Người dùng
+    participant UI as Frontend
+    participant API as Backend (Flask)
+    participant FS as File System (.cfg)
+    participant Proc as Device Supervisor
+
+    User->>UI: Thay đổi cấu hình (Pending)
+    User->>UI: Nhấn "Apply Changes"
+    UI->>API: POST /api/system_configuration (Unified Payload)
+    API->>FS: Ghi đè file .cfg & fsync
+    API->>Proc: Kill Process (Restart)
+    Proc->>FS: Đọc lại file .cfg (Khởi động mới)
+    API->>UI: Trả về {status: "success"}
+    UI->>UI: Tải lại trang (Reload)
+
 ```mermaid
 graph LR
     subgraph Southbound [Thiết bị ngoại vi]
@@ -103,55 +173,3 @@ graph LR
     style Cache fill:#ff9,stroke:#333Lite fill:#bbf,stroke:#333,stroke-width:2px
     style MQTT fill:#ff9,stroke:#333
 
-🔌 Tài liệu API (API Documentation)
-Hệ thống cung cấp RESTful API để frontend tương tác với dữ liệu thiết bị và cấu hình hệ thống. Tất cả phản hồi (response) đều định dạng JSON.
-1. Solar Configuration
-GET /api/solar_configuration: Lấy danh sách thiết bị và trạng thái cấu hình hiện tại.
-POST /api/solar_configuration: Cập nhật cấu hình Solar (thêm/sửa/xóa thiết bị, sửa gain CT/PT).
-2. Manual & Virtual Controls
-POST /api/update_manual_value: Cập nhật giá trị hằng số cho biến Calculation (ví dụ: đặt công suất cố định).
-POST /api/update_manual_state: Cập nhật trạng thái công tắc (0/1) cho biến Calculation.
-POST /api/write_device_value: Gửi lệnh ghi xuống thiết bị vật lý qua MQTT (dành cho các biến có readWrite: "rw").
-3. Historical Data
-GET /api/history: Lấy dữ liệu biểu đồ.
-Parameters: sensor_ids (chuỗi ID), start_time (Unix timestamp), end_time, resolution ('auto'|'raw'|'1min'|'5min').
-4. System & Cloud
-GET/POST /api/system_configuration: Đọc/Ghi cấu hình cổng COM, Cloud MQTT, và tham số IEC104.
-GET/POST /api/cloud_upload_rules: Quản lý các biến được phép đẩy lên Cloud.
-GET/POST /api/logging_rules: Quản lý Whitelist các biến được ghi vào Database.
-🔄 Luồng dữ liệu: Cấu hình Hệ thống (Config Lifecycle)
-Khi người dùng sửa một file cấu hình (ví dụ: thêm thiết bị, sửa gain), dữ liệu không chỉ được ghi xuống ổ đĩa mà còn phải đảm bảo tính nhất quán trên toàn hệ thống.
-Quy trình: "Sửa - Lưu - Tái khởi động"
-Giai đoạn Pending (Frontend):
-Khi người dùng sửa cấu hình trên UI, các thay đổi được lưu tạm trong bộ nhớ của trình duyệt (thông qua appData.solarConfigPage.pending_changes).
-Thanh global-apply-bar sẽ hiển thị số lượng thay đổi đang chờ.
-Giai đoạn Apply (Payload Hợp nhất):
-Khi bấm nút "Apply Changes", Frontend gom toàn bộ thay đổi từ: Devices (Solar), System (COMs), Cloud (MQTT) và IEC104.
-Dữ liệu được gói thành một unifiedPayload duy nhất và gửi đến POST /api/system_configuration.
-Giai đoạn Backend Processing (routes/system_config_routes.py):
-Backend nhận payload, hợp nhất với cấu hình gốc từ device_supervisor.cfg.
-Hàm _apply_new_config_and_restart_supervisor thực hiện:
-Ghi file: Ghi đè file .cfg mới lên ổ cứng.
-Flush: Ép dữ liệu xuống Flash (đảm bảo không mất dữ liệu khi mất điện đột ngột).
-Restart: Kill tiến trình device_supervisor đang chạy. Hệ thống OS (thường là qua systemd hoặc trình quản lý process tương đương) sẽ tự động khởi động lại tiến trình này với cấu hình mới.
-Giai đoạn Đồng bộ trạng thái:
-Sau khi khởi động lại, process_and_save_config_data trong config_utils.py sẽ quét lại file .cfg mới, tạo lại cache (json_output) và calc_mapping.json.
-Thông qua Socket.IO, Frontend được thông báo configuration_updated để cập nhật lại giao diện.
-Sơ đồ Luồng Cấu hình (Config Flow)
-code
-Mermaid
-sequenceDiagram
-    participant User as Người dùng
-    participant UI as Frontend
-    participant API as Backend (Flask)
-    participant FS as File System (.cfg)
-    participant Proc as Device Supervisor
-
-    User->>UI: Thay đổi cấu hình (Pending)
-    User->>UI: Nhấn "Apply Changes"
-    UI->>API: POST /api/system_configuration (Unified Payload)
-    API->>FS: Ghi đè file .cfg & fsync
-    API->>Proc: Kill Process (Restart)
-    Proc->>FS: Đọc lại file .cfg (Khởi động mới)
-    API->>UI: Trả về {status: "success"}
-    UI->>UI: Tải lại trang (Reload)
