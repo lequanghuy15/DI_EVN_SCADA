@@ -149,6 +149,8 @@ sequenceDiagram
     API->>UI: Trả về {status: "success"}
     UI->>UI: Tải lại trang (Reload)
 
+```
+
 ```mermaid
 graph LR
     subgraph Southbound [Thiết bị ngoại vi]
