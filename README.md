@@ -24,24 +24,32 @@ DI_EVN_SCADA/
 │       ├── api_routes.py
 │       ├── solar_config_routes.py
 │       └── system_config_routes.py
-├── templates/              # File mẫu (Template) của các thiết bị
+├── templates/              # File mẫu (Template) thiết bị
 │   ├── Inverter/
 │   ├── Logger/
 │   ├── Meter/
 │   └── Other/
 ├── web_frontend/           # Mã nguồn Frontend
 │   ├── index.html          # Trang chủ
-│   ├── js/                 # Logic JS cho từng trang
+│   ├── js/                 # Logic JS
 │   │   ├── main.js         # Lõi điều khiển
 │   │   ├── apiService.js   # Dịch vụ gọi API
-│   │   ├── page-*.js       # Logic riêng từng trang
-│   └── style.css           # Giao diện
-├── calculations.json       # Cấu hình phép tính (Calculations)
+│   │   ├── page-calculation.js
+│   │   ├── page-cloud-config.js
+│   │   ├── page-controls.js
+│   │   ├── page-details.js
+│   │   ├── page-overview.js
+│   │   ├── page-services.js
+│   │   ├── page-solar-config.js
+│   │   └── page-system-config.js
+│   └── style.css
+├── calculations.json       # Cấu hình phép tính
 ├── cloud_upload_rules.json # Quy tắc đẩy Cloud
 ├── logging_rules.json      # Whitelist ghi nhật ký DB
 ├── protocols.json          # Định nghĩa giao thức
-├── requirements.txt        # Danh sách thư viện phụ thuộc
+├── requirements.txt        # Danh sách thư viện
 └── README.md
+```
 
 ## 📁 Cấu trúc Thư mục
 
