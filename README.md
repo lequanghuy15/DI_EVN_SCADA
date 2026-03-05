@@ -10,8 +10,9 @@ Hệ thống được xây dựng theo mô hình **Backend-Frontend tách biệt
 
 ```text
 DI_EVN_SCADA/
-├── main.py                 # Điểm khởi chạy chính
+
 ├── src/                    # Mã nguồn backend
+|   |── main.py                 # Điểm khởi chạy chính
 │   ├── api_utils.py        # Giao tiếp API Gateway
 │   ├── app_instance.py     # Khởi tạo Flask & SocketIO
 │   ├── app_state.py        # Quản lý bộ nhớ tạm (Cache)
