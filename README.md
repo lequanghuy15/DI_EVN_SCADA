@@ -7,6 +7,8 @@ Hệ thống trung tâm dùng để kết nối, giám sát thời gian thực v
 Hệ thống được xây dựng theo mô hình **Backend-Frontend tách biệt**:
 *   **Backend (Python/Flask/Eventlet):** Xử lý giao tiếp MQTT, quản lý cấu hình thiết bị, tính toán dữ liệu, và giao tiếp với SQLite.
 *   **Frontend (JS/Chart.js/Socket.IO):** Giao diện quản trị thời gian thực với khả năng tùy chỉnh cấu hình thiết bị và biểu đồ linh hoạt.
+
+```text
 DI_EVN_SCADA/
 ├── main.py                 # Điểm khởi chạy chính
 ├── src/                    # Mã nguồn backend
