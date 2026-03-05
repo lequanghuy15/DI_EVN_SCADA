@@ -61,3 +61,38 @@ Hệ thống sử dụng các tệp JSON để lưu trữ cấu hình:
 - Python 3.8+
 - SQLite3 (đã cài đặt sẵn)
 - Broker MQTT (ví dụ: EMQX) hoạt động tại localhost:9009.
+### Sơ đồ Luồng dữ liệu (Data Flow)
+
+```mermaid
+graph TD
+    %% Định nghĩa các node
+    Device[Thiết bị/Modbus]
+    MQTT[MQTT Broker]
+    MQTT_Utils[mqtt_utils.py]
+    RealtimeCache[(realtime_data_cache)]
+    SQLite[(SQLite DB)]
+    CalcLoop[Calculation Loop]
+    SocketIO[Socket.IO Server]
+    CloudService[Cloud Service]
+    WebUI[Web Frontend]
+
+    %% Luồng dữ liệu
+    Device -->|Telemetry| MQTT
+    MQTT -->|Payload| MQTT_Utils
+    
+    MQTT_Utils -->|Ghi log| SQLite
+    MQTT_Utils -->|Cập nhật| RealtimeCache
+    
+    RealtimeCache <-->|Đọc/Ghi| CalcLoop
+    CalcLoop -->|Gửi Virtual Data| Device
+    
+    RealtimeCache -->|Phát sự kiện| SocketIO
+    SocketIO -->|Update Realtime| WebUI
+    
+    RealtimeCache -->|Lấy dữ liệu theo Rules| CloudService
+    CloudService -->|Publish| MQTT
+
+    %% Định nghĩa màu sắc
+    style RealtimeCache fill:#f9f,stroke:#333,stroke-width:2px
+    style SQLite fill:#bbf,stroke:#333,stroke-width:2px
+    style MQTT fill:#ff9,stroke:#333
