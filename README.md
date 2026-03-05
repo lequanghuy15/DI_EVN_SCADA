@@ -7,6 +7,39 @@ Hệ thống trung tâm dùng để kết nối, giám sát thời gian thực v
 Hệ thống được xây dựng theo mô hình **Backend-Frontend tách biệt**:
 *   **Backend (Python/Flask/Eventlet):** Xử lý giao tiếp MQTT, quản lý cấu hình thiết bị, tính toán dữ liệu, và giao tiếp với SQLite.
 *   **Frontend (JS/Chart.js/Socket.IO):** Giao diện quản trị thời gian thực với khả năng tùy chỉnh cấu hình thiết bị và biểu đồ linh hoạt.
+DI_EVN_SCADA/
+├── main.py                 # Điểm khởi chạy chính
+├── src/                    # Mã nguồn backend
+│   ├── api_utils.py        # Giao tiếp API Gateway
+│   ├── app_instance.py     # Khởi tạo Flask & SocketIO
+│   ├── app_state.py        # Quản lý bộ nhớ tạm (Cache)
+│   ├── cloud_service.py    # Đồng bộ lên Cloud
+│   ├── config_utils.py     # Xử lý cấu hình thiết bị
+│   ├── db_utils.py         # Quản lý SQLite & Downsampling
+│   ├── inhand_services.py  # Bridge dữ liệu với InHand
+│   ├── mqtt_utils.py       # Xử lý MQTT telemetry
+│   └── routes/             # Các API Endpoint
+│       ├── api_routes.py
+│       ├── solar_config_routes.py
+│       └── system_config_routes.py
+├── templates/              # File mẫu (Template) của các thiết bị
+│   ├── Inverter/
+│   ├── Logger/
+│   ├── Meter/
+│   └── Other/
+├── web_frontend/           # Mã nguồn Frontend
+│   ├── index.html          # Trang chủ
+│   ├── js/                 # Logic JS cho từng trang
+│   │   ├── main.js         # Lõi điều khiển
+│   │   ├── apiService.js   # Dịch vụ gọi API
+│   │   ├── page-*.js       # Logic riêng từng trang
+│   └── style.css           # Giao diện
+├── calculations.json       # Cấu hình phép tính (Calculations)
+├── cloud_upload_rules.json # Quy tắc đẩy Cloud
+├── logging_rules.json      # Whitelist ghi nhật ký DB
+├── protocols.json          # Định nghĩa giao thức
+├── requirements.txt        # Danh sách thư viện phụ thuộc
+└── README.md
 
 ## 📁 Cấu trúc Thư mục
 
