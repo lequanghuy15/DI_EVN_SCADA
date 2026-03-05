@@ -61,38 +61,44 @@ Hệ thống sử dụng các tệp JSON để lưu trữ cấu hình:
 - Python 3.8+
 - SQLite3 (đã cài đặt sẵn)
 - Broker MQTT (ví dụ: EMQX) hoạt động tại localhost:9009.
-### Sơ đồ Luồng dữ liệu (Data Flow)
+## 🔄 Luồng dữ liệu (Data Flow)
+
+Dữ liệu đi qua hệ thống theo hành trình từ **Thiết bị thật (Southbound)** đến **Người dùng cuối (Northbound)** như sau:
+
+### 1. Thu thập dữ liệu
+*   **Thiết bị thực tế:** Các biến (measures) từ Inverter, Meter được đọc thông qua Modbus.
+*   **Bridge Layer:** `inhand_services.py` thực hiện polling và đẩy dữ liệu thô vào **Broker MQTT** (topic `internal/modbus/telemetry`).
+
+### 2. Xử lý & Lưu trữ
+*   **MQTT Consumer:** `mqtt_utils.py` lắng nghe dữ liệu, lọc theo `LOGGING_WHITELIST`, sau đó:
+    *   **Lưu trữ:** Đẩy vào hàng đợi (`DB_WRITE_QUEUE`) để ghi vào **SQLite DB**.
+    *   **Cache:** Cập nhật vào `realtime_data_cache` – trung tâm dữ liệu của hệ thống.
+*   **Calculation Loop:** Quét các công thức trong `calculations.json`, tính toán (SUM, AVG, Max, Min) và cập nhật kết quả vào cache.
+
+### 3. Hiển thị & Đồng bộ
+*   **Socket.IO:** Khi dữ liệu cache thay đổi, server phát sự kiện `page_data_update` qua Websocket. Trình duyệt nhận sự kiện này để cập nhật trực tiếp lên Dashboard và Biểu đồ.
+*   **Cloud Service:** Tự động đồng bộ các biến theo cấu hình `CLOUD_UPLOAD_RULES` lên các nền tảng IoT Cloud qua giao thức MQTT.
 
 ```mermaid
-graph TD
-    %% Định nghĩa các node
-    Device[Thiết bị/Modbus]
-    MQTT[MQTT Broker]
-    MQTT_Utils[mqtt_utils.py]
-    RealtimeCache[(realtime_data_cache)]
-    SQLite[(SQLite DB)]
-    CalcLoop[Calculation Loop]
-    SocketIO[Socket.IO Server]
-    CloudService[Cloud Service]
-    WebUI[Web Frontend]
+graph LR
+    subgraph Southbound [Thiết bị ngoại vi]
+        Device[Thiết bị thật] -->|Modbus| Bridge[InHand Bridge]
+    end
 
-    %% Luồng dữ liệu
-    Device -->|Telemetry| MQTT
-    MQTT -->|Payload| MQTT_Utils
-    
-    MQTT_Utils -->|Ghi log| SQLite
-    MQTT_Utils -->|Cập nhật| RealtimeCache
-    
-    RealtimeCache <-->|Đọc/Ghi| CalcLoop
-    CalcLoop -->|Gửi Virtual Data| Device
-    
-    RealtimeCache -->|Phát sự kiện| SocketIO
-    SocketIO -->|Update Realtime| WebUI
-    
-    RealtimeCache -->|Lấy dữ liệu theo Rules| CloudService
-    CloudService -->|Publish| MQTT
+    subgraph Backend [Backend Service]
+        Bridge -->|MQTT| MQTT[MQTT Broker]
+        MQTT -->|Subscription| Processor[mqtt_utils.py]
+        Processor -->|Update| Cache[(realtime_data_cache)]
+        Processor -->|Queue| DB[SQLite DB]
+        Cache <-->|Tính toán| Calc[Calculation Loop]
+    end
 
-    %% Định nghĩa màu sắc
-    style RealtimeCache fill:#f9f,stroke:#333,stroke-width:2px
-    style SQLite fill:#bbf,stroke:#333,stroke-width:2px
+    subgraph Northbound [Người dùng]
+        Cache -->|Socket.IO| Socket[Socket.IO Server]
+        Socket -->|Realtime Update| Browser[Trình duyệt Web]
+    end
+
+    style Device fill:#f9f,stroke:#333
+    style Browser fill:#bbf,stroke:#333
+    style Cache fill:#ff9,stroke:#333Lite fill:#bbf,stroke:#333,stroke-width:2px
     style MQTT fill:#ff9,stroke:#333
