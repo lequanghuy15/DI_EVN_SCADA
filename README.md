@@ -218,4 +218,31 @@ graph LR
     style Browser fill:#bbf,stroke:#333
     style Cache fill:#ff9,stroke:#333Lite fill:#bbf,stroke:#333,stroke-width:2px
     style MQTT fill:#ff9,stroke:#333
+```
+```mermaid
+graph TD
+    A([Bắt đầu chương trình]) --> B[Dừng service 'serial-getty' để giải phóng UART]
+    B --> C[Khởi tạo GPIO cho UART và Multiplexer 4066]
+    C --> D[Bật buffer truyền TX (Kéo chân EN_BUF xuống mức LOW)]
+    D --> E[Mở cổng UART /dev/ttyS0]
+    E --> F[Đăng ký địa chỉ Node ID cho ZOOM, FOCUS, PIRIS]
+    
+    F --> G[Cấu hình trục ZOOM]
+    G -.-> CA
+    
+    H[Cấu hình trục FOCUS] -.-> CA
+    G --> H
+    
+    I[Cấu hình trục PIRIS] -.-> CA
+    H --> I
+    
+    I --> J[Load kernel module: 'insmod tmc_driver.ko']
+    J --> K([Kết thúc chương trình])
 
+    subgraph CA [Hàm cấu hình: configure_axis]
+        CA1[Chuyển mạch GPIO chọn chân UART của trục tương ứng] --> CA2[Đọc thanh ghi IFCNT ban đầu]
+        CA2 --> CA3[Ghi UART: cấu hình SLAVECONF, GSTAT, IHOLD_IRUN, TPOWERDOWN]
+        CA3 --> CA4[Ghi UART: cấu hình vi bước, nội suy GCONF, CHOPCONF, PWMCONF]
+        CA4 --> CA5[Đọc lại thanh ghi IFCNT để kiểm tra chip có phản hồi không]
+    end
+```
